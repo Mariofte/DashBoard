@@ -1,146 +1,119 @@
-// ================= CONFIGURACIÓN =================
+// URL del CSV (Google Sheets)
+const csvURL = "https://docs.google.com/spreadsheets/d/1eed5Pgu65Gl1YJDIdwdRqflCAYgBAfQJ8t296Wa_t28/export?format=csv&gid=0";
 
-const csvURL =
-  "https://docs.google.com/spreadsheets/d/1eed5Pgu65Gl1YJDIdwdRqflCAYgBAfQJ8t296Wa_t28/export?format=csv&gid=0";
+// Guardamos todo el CSV aquí
+let datos = [];
 
-let datosCSV = [];
+// Gráficas (para poder destruirlas y recrearlas)
+let chartPelotas, chartPatrones, chartFouls;
 
-// ================= NORMALIZADOR DE TEXTO =================
-// Arregla encabezados rotos del CSV
-function normalizar(texto) {
-  return texto
-    .replace(/\n/g, " ")        // elimina saltos de línea
-    .replace(/"/g, "")          // elimina comillas
-    .replace(/\s+/g, " ")       // espacios dobles
-    .trim()
-    .toLowerCase();             // todo en minúsculas
-}
-
-// ================= COLUMNAS DEFINIDAS =================
-// USAMOS VERSIÓN NORMALIZADA (a prueba de Excel)
-
-const columnas = {
-  autonomo: [
-    "pose",
-    "movió en autónomo",
-    "¿cuántas pelotas metió al goal autonomo?",
-    "¿cuántas pelotas en overflow autonomo?",
-    "¿cuántas palotas en patrones autonomo?",
-    "¿cuántas minor fouls autonomo?",
-    "¿cuántas major fouls autonomo?"
-  ],
-
-  teleop: [
-    "¿cuántas pelotas dejó en el depot tele-op?",
-    "¿cuántas pelotas metió al goal tele-op?",
-    "¿cuántas pelotas en overflow tele-op?",
-    "¿cuántas pelotas en patrones tele-op?",
-    "¿cuántas veces abrió el túnel tele-op?",
-    "¿cuántas minor fouls tele-op?",
-    "¿cuántas major fouls tele-op?",
-    "¿el robot se estacionó end-game?"
-  ],
-
-  evaluacion: [
-    "¿habilidad de los drivers preguntas?",
-    "¿habilidad del human player preguntas?",
-    "¿velocidad del robot preguntas?",
-    "¿comentarios adicionales preguntas?"
-  ]
-};
-
-// ================= CARGA DEL CSV =================
-
+// Leer CSV
 Papa.parse(csvURL, {
-  download: true,
-  skipEmptyLines: true,
-  complete: function (results) {
-
-    // Guardamos CSV
-    datosCSV = results.data;
-
-    // Limpiar encabezados reales del CSV
-    const encabezadosOriginales = datosCSV[0];
-    const encabezadosLimpios = encabezadosOriginales.map(normalizar);
-
-    // Reemplazamos encabezados por los limpios
-    datosCSV[0] = encabezadosLimpios;
-
-    // Tabla global
-    document.getElementById("tablaGlobal").innerHTML =
-      crearTabla(datosCSV, encabezadosLimpios);
-
-    // Selector de equipos
-    llenarSelectorEquipos();
-  }
+    download: true,
+    header: true, // CSV YA tiene encabezados bien hechos
+    skipEmptyLines: true,
+    complete: function (results) {
+        datos = results.data;
+        cargarSelectorEquipos();
+    }
 });
 
-// ================= FUNCIONES =================
+// Llena el selector con equipos únicos
+function cargarSelectorEquipos() {
+    const selector = document.getElementById("selectorEquipo");
 
-// Crear tabla genérica
-function crearTabla(filas, columnasMostrar) {
-  let html = `
-    <div class="table-responsive">
-    <table class="table table-sm table-hover">
-      <thead class="table-dark"><tr>
-  `;
+    const equipos = [...new Set(datos.map(d => d.Equipo))];
 
-  columnasMostrar.forEach(c => html += `<th>${c}</th>`);
-  html += "</tr></thead><tbody>";
-
-  filas.slice(1).forEach(fila => {
-    html += "<tr>";
-    columnasMostrar.forEach(col => {
-      const i = filas[0].indexOf(col);
-      html += `<td>${fila[i] ?? ""}</td>`;
+    equipos.forEach(equipo => {
+        const option = document.createElement("option");
+        option.value = equipo;
+        option.textContent = equipo;
+        selector.appendChild(option);
     });
-    html += "</tr>";
-  });
 
-  html += "</tbody></table></div>";
-  return html;
+    // Mostrar primer equipo automáticamente
+    mostrarEquipo(equipos[0]);
+
+    selector.addEventListener("change", () => {
+        mostrarEquipo(selector.value);
+    });
 }
 
-// Selector de equipos
-function llenarSelectorEquipos() {
-  const select = document.getElementById("equipoSelect");
-  const idxEquipo = datosCSV[0].indexOf("equipo");
+// Muestra tabla + gráficas del equipo
+function mostrarEquipo(equipo) {
+    const datosEquipo = datos.filter(d => d.Equipo === equipo);
 
-  const equipos = [...new Set(
-    datosCSV.slice(1).map(f => f[idxEquipo])
-  )];
-
-  equipos.forEach(eq => {
-    const op = document.createElement("option");
-    op.value = eq;
-    op.textContent = `Equipo ${eq}`;
-    select.appendChild(op);
-  });
-
-  select.addEventListener("change", mostrarEquipo);
+    renderTabla(datosEquipo);
+    renderGraficas(datosEquipo);
 }
 
-// Mostrar datos por equipo
-function mostrarEquipo() {
-  const equipo = this.value;
-  if (!equipo) return;
+// Construye la tabla del equipo
+function renderTabla(filas) {
+    let html = `<table class="table table-sm table-bordered table-striped">`;
 
-  document.getElementById("resultadosEquipo")
-    .classList.remove("d-none");
+    html += "<thead><tr>";
+    Object.keys(filas[0]).forEach(col => {
+        html += `<th>${col}</th>`;
+    });
+    html += "</tr></thead><tbody>";
 
-  const idxEquipo = datosCSV[0].indexOf("equipo");
+    filas.forEach(fila => {
+        html += "<tr>";
+        Object.values(fila).forEach(valor => {
+            html += `<td>${valor}</td>`;
+        });
+        html += "</tr>";
+    });
 
-  const filasEquipo = [
-    datosCSV[0],
-    ...datosCSV.slice(1).filter(f => f[idxEquipo] == equipo)
-  ];
+    html += "</tbody></table>";
 
-  document.getElementById("tablaAutoEquipo").innerHTML =
-    crearTabla(filasEquipo, columnas.autonomo.map(normalizar));
+    document.getElementById("tablaEquipo").innerHTML = html;
+}
 
-  document.getElementById("tablaTeleopEquipo").innerHTML =
-    crearTabla(filasEquipo, columnas.teleop.map(normalizar));
+// Crea las gráficas
+function renderGraficas(filas) {
 
-  document.getElementById("tablaEvalEquipo").innerHTML =
-    crearTabla(filasEquipo, columnas.evaluacion.map(normalizar));
+    // SUMAS
+    const pelotas = filas.reduce((s, f) =>
+        s +
+        Number(f["¿Cuántas pelotas metió al goal autonomo?"]) +
+        Number(f["¿Cuántas pelotas en Overflow autonomo?"]) +
+        Number(f["¿Cuántas pelotas metió al goal Tele-Op?"]) +
+        Number(f["¿Cuántas pelotas en Overflow Tele-Op?"])
+    , 0);
+
+    const patrones = filas.reduce((s, f) =>
+        s +
+        Number(f["¿Cuántas palotas en patrones autonomo?"]) +
+        Number(f["¿Cuántas pelotas en patrones Tele-Op?"])
+    , 0);
+
+    const fouls = filas.reduce((s, f) =>
+        s +
+        Number(f["¿Cuántas minor fouls autonomo?"]) +
+        Number(f["¿Cuántas major fouls autonomo?"]) +
+        Number(f["¿Cuántas minor fouls Tele-Op?"]) +
+        Number(f["¿Cuántas major fouls Tele-Op?"])
+    , 0);
+
+    // Limpiar gráficas anteriores
+    chartPelotas?.destroy();
+    chartPatrones?.destroy();
+    chartFouls?.destroy();
+
+    // PLOT
+    chartPelotas = new Chart(document.getElementById("graficaPelotas"), {
+        type: "bar",
+        data: { labels: ["Pelotas"], datasets: [{ data: [pelotas] }] }
+    });
+
+    chartPatrones = new Chart(document.getElementById("graficaPatrones"), {
+        type: "bar",
+        data: { labels: ["Patrones"], datasets: [{ data: [patrones] }] }
+    });
+
+    chartFouls = new Chart(document.getElementById("graficaFouls"), {
+        type: "bar",
+        data: { labels: ["Fouls"], datasets: [{ data: [fouls] }] }
+    });
 }
