@@ -21,20 +21,41 @@
 
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="./index.html">Cerbotics 4400</a>
-        <div class="navbar-nav ms-auto">
-            <a class="nav-link" href="./index.html">Index</a>
-            <a class="nav-link active" href="./dashboard.html">Dashboard(Match)</a>
-            <a class="nav-link" href="./dashboardpits.html">Dashboard(Pits)</a>
+        <div class="container">
+
+            <!-- Nombre del equipo -->
+            <a class="navbar-brand fw-bold" href="./index.html">
+                Cerbotics 4400
+            </a>
+
+            <!-- Botón hamburguesa (celular) -->
+            <button 
+                class="navbar-toggler" 
+                type="button" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Links -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="./index.html">Index</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./dashboard.html">Dashboard(Match)</a>
+                    </li>
+                </ul>
+            </div>
+
         </div>
-    </div>
-</nav>
+    </nav>
 
 <!-- HEADER -->
 <header class="text-center my-4">
     <h1 class="fw-bold">📊 Dashboard por Equipo</h1>
-    <p class="text-muted">Filtra por equipo y tipo de match</p>
+    <p class="text-muted">Filtra por equipo y match</p>
 </header>
 
 <main class="container">
@@ -91,7 +112,7 @@
 </main>
 
 <!-- JS -->
-<script src="./js/data/spreadsheet.js"></script>
+<script src="./js/data/match.js"></script>
 
 </body>
 </html>
