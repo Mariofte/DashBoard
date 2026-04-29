@@ -2,7 +2,7 @@
 // CONFIGURACIÓN
 // ===============================
 const csvURL =
-  "https://docs.google.com/spreadsheets/d/1LnDbS_SvPKxa2f5kJvoCMRqZdLJATMsuFKt0S6tWPs8/export?format=csv&gid=0";
+  "https://docs.google.com/spreadsheets/d/1HnkmpI0KQTUFRqr2HDVhKVsSy_tPB5CPvpd6aJQbjyM/export?format=csv&gid=0";
 
 let datos = [];
 let chartPelotas = null;
